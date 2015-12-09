@@ -169,55 +169,7 @@ def sineModelMultiRes(x, fs, w, N, t, B):
 			ploc = UF.peakDetection(mX, t)          # detect locations of peaks
 			iploc, _ipmag, _ipphase = UF.peakInterp(mX, pX, ploc)   # refine peak values by interpolation
 			_ipfreq = fs*iploc/float(_N)            # convert peak locations to Hertz
-		def sineModelMultiRes(x, fs, w, N, t, B):
-	"""
-	Analysis/synthesis of a sound using the sinusoidal model, without sine tracking
-	x: input array sound, w: array of analysis windows, N: array of sizes of complex spectrum,
-	t: threshold in negative dB, B: array of frequency bands
-	returns y: output array sound
-	"""
-		
-	hM1 = [int(math.floor((_w.size+1)/2)) for _w in w]      # half analysis window(s) size by rounding
-	hM2 = [int(math.floor(_w.size/2)) for _w in w]          # half analysis window(s) size by floor
-	Ns = 512                                                # FFT size for synthesis (even)
-	H = Ns/4                                                # Hop size used for analysis and synthesis
-	hNs = Ns/2                                              # half of synthesis FFT size
-	pin = max(hNs, max(hM1))                                # init sound pointer in middle of anal window       
-	pend = x.size - max(hNs, max(hM1))                      # last sample to start a frame
-	fftbuffer = np.array([])                                # initialize buffer for FFT
-	yw = np.zeros(Ns)                                       # initialize output sound frame
-	y = np.zeros(x.size)                                    # initialize output array
-	w = [_w / sum(_w) for _w in w]                          # normalize analysis window(s)
-	sw = np.zeros(Ns)                                       # initialize synthesis window
-	ow = triang(2*H)                                        # triangular window
-	sw[hNs-H:hNs+H] = ow                                    # add triangular window
-	bh = blackmanharris(Ns)                                 # blackmanharris window
-	bh = bh / sum(bh)                                       # normalized blackmanharris window
-	sw[hNs-H:hNs+H] = sw[hNs-H:hNs+H] / bh[hNs-H:hNs+H]     # normalized synthesis window
-	while pin<pend:                                         # while input sound pointer is within sound 
-	#-----analysis-----             
-		ipmag = ipphase = ipfreq = np.array([])         # initialize the synthesis arrays
-		for i in range(0, len(w)):                      # for each window, use some loop variables ('_' prefix)
-			_hM1, _hM2, _w, _N, _B = (hM1[i], hM2[i], w[i], N[i], B[i])
-			x1 = x[pin-_hM1:pin+_hM2]               # select frame
-			mX, pX = DFT.dftAnal(x1, _w, _N)        # compute dft
-			ploc = UF.peakDetection(mX, t)          # detect locations of peaks
-			iploc, _ipmag, _ipphase = UF.peakInterp(mX, pX, ploc)   # refine peak values by interpolation
-			_ipfreq = fs*iploc/float(_N)            # convert peak locations to Hertz
 			lo, hi = (_B[0], _B[1])                 # low/high from band tuples [..(lo, hi)..]
-			mask = (_ipfreq >= lo) * (_ipfreq < hi) # mask for in-band components
-			ipmag = np.append(ipmag, _ipmag * mask) # mask and append components
-			ipphase = np.append(ipphase, _ipphase * mask)
-			ipfreq = np.append(ipfreq, _ipfreq * mask)
-	#-----synthesis-----
-		Y = UF.genSpecSines(ipfreq, ipmag, ipphase, Ns, fs)   # generate sines in the spectrum         
-		fftbuffer = np.real(ifft(Y))                          # compute inverse FFT
-		yw[:hNs-1] = fftbuffer[hNs+1:]                        # undo zero-phase window
-		yw[hNs-1:] = fftbuffer[:hNs+1] 
-		y[pin-hNs:pin+hNs] += sw*yw                           # overlap-add and apply a synthesis window
-		pin += H                                              # advance sound pointer
-	return y
-	lo, hi = (_B[0], _B[1])                 # low/high from band tuples [..(lo, hi)..]
 			mask = (_ipfreq >= lo) * (_ipfreq < hi) # mask for in-band components
 			ipmag = np.append(ipmag, _ipmag * mask) # mask and append components
 			ipphase = np.append(ipphase, _ipphase * mask)
